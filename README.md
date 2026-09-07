@@ -11,6 +11,10 @@ rebuilt as a lightweight **Streamlit** app that deploys free from GitHub.
 > ⚠️ Educational information only. This project does **not** give personalised financial,
 > investment, tax or legal advice.
 
+📖 **Full write-up for the presentation and viva:** [DOCUMENTATION.md](DOCUMENTATION.md) —
+architecture, tech-stack rationale, the retrieval maths, file-by-file walkthrough, testing,
+and a prepared Q&A section.
+
 ---
 
 ## How it works
@@ -56,8 +60,8 @@ requirements.txt       Python dependencies
 ## 2. Local setup
 
 ```bash
-git clone <your-repo-url>
-cd CHATBOT
+git clone https://github.com/aryanAyush29/FinancialAppChatbot.git
+cd FinancialAppChatbot
 
 python -m venv .venv
 # Windows PowerShell:
@@ -94,7 +98,44 @@ python rag.py "What is the difference between a debit and a credit card?"
 streamlit run app.py
 ```
 
-Opens at <http://localhost:8501>.
+Your browser opens automatically. Streamlit prints three URLs:
+
+| URL | Reachable from | Notes |
+|---|---|---|
+| **Local URL** `http://localhost:8501` | This computer only | Use this one. |
+| **Network URL** `http://192.168.x.x:8501` | Other devices on the **same Wi-Fi/LAN** | Handy to open on your phone or a second laptop on the same network while the app keeps running here. |
+| **External URL** `http://<public-ip>:8501` | The public internet, in theory | Almost never works (router NAT / CGNAT block it) and would be unauthenticated plain HTTP. Ignore it — use the Streamlit Cloud deploy in section 6 to share publicly. |
+
+Because the Network URL is live whenever the app runs, anyone on the same network can use it
+and spend your Gemini quota. On an untrusted network (e.g. campus Wi-Fi) run it local-only:
+
+```bash
+streamlit run app.py --server.address 127.0.0.1
+```
+
+### Check it works
+
+1. Click a sidebar example (e.g. *"Difference between NEFT, RTGS, IMPS and UPI?"*) or type
+   your own question in the box at the bottom.
+2. A good answer is structured, ends with an *"Educational information only…"* disclaimer,
+   and has a **"Sources used"** expander listing the knowledge-base files it drew from.
+3. Guardrail check: ask *"Which exact mutual fund should I buy?"* — it should explain
+   general principles and point you to a licensed adviser, not name a product.
+
+### Stop everything
+
+- **Ctrl+C** in the terminal running Streamlit. If you started it more than once, kill any
+  strays:
+  ```bash
+  # PowerShell
+  Get-CimInstance Win32_Process -Filter "name='python.exe'" |
+    Where-Object { $_.CommandLine -like '*streamlit*' } |
+    ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+  ```
+- `deactivate` to leave the virtual environment.
+- There is no database or background service to stop.
+
+To start again later: `.venv\Scripts\Activate.ps1`, then `streamlit run app.py`.
 
 ---
 
@@ -159,7 +200,7 @@ Set these in `.env` (local) or Secrets (cloud). Defaults are sensible.
 | Variable | Default | Purpose |
 |---|---|---|
 | `GEMINI_API_KEY` | — | **required** |
-| `GEMINI_CHAT_MODEL` | `gemini-2.5-flash` | Chat model. If it errors ("model not found"), run `python list_models.py` and set a current name. |
+| `GEMINI_CHAT_MODEL` | `gemini-3.6-flash` | Chat model. If it errors ("model not found" / 404), run `python list_models.py` and set a current name. |
 | `GEMINI_EMBED_MODEL` | `gemini-embedding-001` | Embedding model. Must be the **same** for `ingest.py` and the app. |
 | `EMBED_DIM` | `768` | Embedding size. Change → re-run `ingest.py`. |
 | `RAG_TOP_K` | `5` | How many chunks to feed the model. |
